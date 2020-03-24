@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "jsx": "react",
+        "jsxFactory": "createElement",
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "ES5",
+        "module": "CommonJS",
+        "resolveJsonModule": true
+    }
+}
