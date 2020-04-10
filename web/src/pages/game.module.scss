@@ -1,6 +1,7 @@
 @import 'mathsass';
 
 .game {
+
     --grid-colour: black;
     --grid-size: 30px;
     --grid-offset-x: 0;
@@ -23,6 +24,11 @@
     }
 
     .map {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
         --x: 0px;
         --y: 0px;
     }
