@@ -11,6 +11,8 @@
     width: calc(#{$size});
     height: calc(#{$size});
 
+    border-radius: 50%;
+
     $x: "var(--grid-size) * var(--token-x)";
     $y: "var(--grid-size) * var(--token-y)";
     transform: translate(calc(#{$x}), calc(#{$y}));
@@ -36,6 +38,7 @@
         $shadow-y: calc(((var(--mouse-y) - var(--y)) / var(--scale)) - (#{$y}) - (#{$size} / 2));
 
         transform: translate(#{$shadow-x}, #{$shadow-y});
+        pointer-events: none;
     }
 
     .menu {
@@ -61,10 +64,16 @@
             }
 
             transform: translate(0, 0);
+
+            &.close {
+                background-color: darkred;
+            }
         }
     }
 
     &.open {
+        z-index: 10;
+
         .image {
             pointer-events: none;
         }
@@ -77,6 +86,15 @@
                     transform: rotate(calc(#{$angle})) translate(#{$distance}, 0) rotate(calc(-1 * (#{$angle})));
                 }
             }
+
+        }
+    }
+
+    &.moving {
+        pointer-events: none;
+
+        .move {
+            background-color: lightblue;
         }
     }
 }
