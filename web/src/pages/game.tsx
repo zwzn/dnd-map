@@ -5,18 +5,7 @@ import { PinchZoom } from '../components/pinch-zoom'
 import styles from './game.module.scss'
 import { bind } from '@zwzn/spicy'
 import classNames from 'classnames'
-
-interface Point {
-    x: number;
-    y: number;
-}
-
-interface Token {
-    id: string
-    position: Point;
-    image: string
-    size: number
-}
+import { Token, TokenC } from '../components/token'
 
 interface Game {
     background: string;
@@ -94,51 +83,11 @@ export const Game: FunctionalComponent = props => {
                 })}
             />
             <div class={styles.tokens}>
-                {game.tokens.map(t => <TokenC token={t} onChange={tokenChange} />)}
+                {game.tokens.map(t => <TokenC key={t.id} token={t} onChange={tokenChange} />)}
             </div>
         </PinchZoom>
         {/* <div class={styles.hud}>
             test
         </div> */}
-    </div>
-}
-
-interface TokenCProps {
-    token: Token;
-    onChange: (t: Token) => void;
-    onStartMove: (t: Token) => void;
-}
-
-const TokenC: FunctionComponent<TokenCProps> = props => {
-    const [selected, setSelected] = useState(false)
-
-    const openMenu = useCallback((e: MouseEvent) => {
-        e.stopPropagation()
-        setSelected(true)
-    }, [setSelected])
-    const closeMenu = useCallback((e: MouseEvent) => {
-        e.stopPropagation()
-        setSelected(false)
-    }, [setSelected])
-
-    const startMove = useCallback((e: MouseEvent) => {
-        e.stopPropagation()
-    }, [props.token, setSelected])
-
-    return <div
-        class={classNames(styles.token, { [styles.open]: selected })}
-        style={{
-            '--token-x': props.token.position.x,
-            '--token-y': props.token.position.y,
-            '--token-size': props.token.size,
-        }}
-        onClick={openMenu}
-    >
-        <div class={styles.menu}>
-            <button onClick={closeMenu}>×</button>
-            <button onClick={startMove}>M</button>
-            <button>T</button>
-        </div>
-        <img class={styles.image} src={props.token.image} />
     </div>
 }
