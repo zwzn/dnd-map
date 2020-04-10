@@ -1,0 +1,121 @@
+@import 'mathsass';
+
+.game {
+    --grid-colour: black;
+    --grid-size: 30px;
+    --grid-offset-x: 0;
+    --grid-offset-y: 0;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    .map,
+    .hud,
+    .tokens {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .hud {
+        pointer-events: none;
+    }
+
+    .grid {
+
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-size: var(--grid-size) var(--grid-size);
+        pointer-events: none;
+
+        background-position: var(--grid-offset-x) var(--grid-offset-y);
+        background-image:
+            linear-gradient(to right, var(--grid-colour) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-colour) 1px, transparent 1px);
+    }
+
+    .tokens {
+        .token {
+            --token-size: 1;
+            --token-x: 0;
+            --token-y: 0;
+
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: calc(var(--grid-size) * var(--token-size));
+            height: calc(var(--grid-size) * var(--token-size));
+            transform: translate(calc(var(--grid-size) * var(--token-x)), calc(var(--grid-size) * var(--token-y)));
+
+            .image {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .shadow {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: calc(var(--grid-size) * var(--token-size));
+                height: calc(var(--grid-size) * var(--token-size));
+
+                opacity: 0.5;
+                transform: translate(var(--token-shadow-x), var(--token-shadow-y));
+            }
+
+            .menu {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+
+
+                button {
+                    position: absolute;
+                    background: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    top: -15px;
+                    left: -15px;
+
+                    @for $i from 0 to 10 {
+                        &:nth-child(#{$i + 1}) {
+                            transition: transform 0.1s + $i * 0.1s;
+                        }
+                    }
+
+                    transform: translate(0, 0);
+                }
+            }
+
+            &.open {
+                .image {
+                    pointer-events: none;
+                }
+
+                .menu {
+                    @for $i from 0 to 10 {
+                        button:nth-child(#{$i + 1}) {
+                            $angle: "#{$i} * -80deg * (1 / (var(--token-size) + 1)) - 130deg";
+                            $distance: calc(var(--grid-size) * var(--token-size) / 2 + 20px);
+                            transform: rotate(calc(#{$angle})) translate(#{$distance}, 0) rotate(calc(-1 * (#{$angle})));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

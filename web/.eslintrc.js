@@ -21,7 +21,7 @@ module.exports = {
         ]
     },
     rules: {
-        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^createElement$' }],
+        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^h$' }],
         '@typescript-eslint/no-inferrable-types': 'off',
         '@typescript-eslint/explicit-function-return-type': ['warn', {
             allowExpressions: true,

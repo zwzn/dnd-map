@@ -2,7 +2,7 @@
     "compilerOptions": {
         "experimentalDecorators": true,
         "jsx": "react",
-        "jsxFactory": "createElement",
+        "jsxFactory": "h",
         "strict": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
