@@ -32,8 +32,8 @@
 
         opacity: 0.5;
 
-        $shadow-x: calc(((var(--mouse-x) - var(--x)) / var(--scale)) - (#{$x}) - (#{$size} / 2)); // var(--scale)
-        $shadow-y: calc(((var(--mouse-y) - var(--y)) / var(--scale)) - (#{$y}) - (#{$size} / 2)); // var(--scale)
+        $shadow-x: calc(((var(--mouse-x) - var(--x)) / var(--scale)) - (#{$x}) - (#{$size} / 2));
+        $shadow-y: calc(((var(--mouse-y) - var(--y)) / var(--scale)) - (#{$y}) - (#{$size} / 2));
 
         transform: translate(#{$shadow-x}, #{$shadow-y});
     }

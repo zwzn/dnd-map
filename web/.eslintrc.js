@@ -21,7 +21,7 @@ module.exports = {
         ]
     },
     rules: {
-        '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^h$' }],
+        '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^h$' }],
         '@typescript-eslint/no-inferrable-types': 'off',
         '@typescript-eslint/explicit-function-return-type': ['warn', {
             allowExpressions: true,
@@ -36,6 +36,7 @@ module.exports = {
         'react/react-in-jsx-scope': 'off',
         'react/prop-types': 'off',
         'react/display-name': 'off',
+        'react/no-unknown-property': 'off',
         'semi': ["warn", "never"],
         "comma-dangle": ["warn", "always-multiline"],
         "indent": ["warn", 4],

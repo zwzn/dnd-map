@@ -3,17 +3,17 @@ import { useCallback, useState } from "preact/hooks"
 import classNames from "classnames"
 import styles from "./token.module.scss"
 
-const root = document.documentElement;
+const root = document.documentElement
 root.addEventListener("mousemove", e => {
-    root.style.setProperty('--mouse-x', e.clientX + "px");
-    root.style.setProperty('--mouse-y', e.clientY + "px");
-});
+    root.style.setProperty('--mouse-x', e.clientX + "px")
+    root.style.setProperty('--mouse-y', e.clientY + "px")
+})
 
 export interface Token {
-    id: string
+    id: string;
     position: Point;
-    image: string
-    size: number
+    image: string;
+    size: number;
 }
 
 interface TokenCProps {
@@ -42,7 +42,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
     const endMove = useCallback((e: MouseEvent) => {
         e.stopPropagation()
         setMoving(false)
-        setSelected(false)
+        // setSelected(false)
 
         const element = e.target as HTMLElement
         const s = getComputedStyle(element)
@@ -50,17 +50,15 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
         const y = Number(s.getPropertyValue('--y').slice(0, -2))
         const gridSize = Number(s.getPropertyValue('--grid-size').slice(0, -2))
         const scale = Number(s.getPropertyValue('--scale'))
-        console.log(x, y, scale);
-
 
         props.onChange({
             ...props.token,
             position: {
-                x: (((e.x - x) / scale) / gridSize - props.token.size / 2).toFixed(0),
-                y: (((e.y - y) / scale) / gridSize - props.token.size / 2).toFixed(0),
-            }
+                x: Math.round((((e.x - x) / scale) / gridSize - props.token.size / 2)),
+                y: Math.round((((e.y - y) / scale) / gridSize - props.token.size / 2)),
+            },
         })
-    }, [props.token, props.onChange, setSelected, setMoving])
+    }, [props, setSelected, setMoving])
 
     return <div
         class={classNames(styles.token, { [styles.open]: selected })}

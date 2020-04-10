@@ -1,4 +1,4 @@
-import { FunctionalComponent, h } from "preact";
+import { FunctionalComponent, h } from 'preact'
 
 export const Layout: FunctionalComponent = props => {
     return <div>

@@ -1,25 +1,21 @@
-import { FunctionalComponent, h, FunctionComponent } from 'preact'
+import { FunctionalComponent, h } from 'preact'
 import { useState, useCallback } from 'preact/hooks'
-import { Layout } from '../components/layout'
 import { PinchZoom } from '../components/pinch-zoom'
 import styles from './game.module.scss'
-import { bind } from '@zwzn/spicy'
 import classNames from 'classnames'
 import { Token, TokenC } from '../components/token'
 
-interface Game {
+interface GameState {
     background: string;
     grid: {
         size: number;
         offset: Point;
     };
-    tokens: Token[]
+    tokens: Token[];
 }
 
-export const Game: FunctionalComponent = props => {
-    // console.log(props);
-
-    const [game, setGame] = useState<Game>({
+export const Game: FunctionalComponent = () => {
+    const [game, setGame] = useState<GameState>({
         background: 'https://i.redd.it/7igkmw001p121.jpg',
         grid: {
             size: 50,
@@ -53,19 +49,24 @@ export const Game: FunctionalComponent = props => {
         ],
     })
 
-    const tokenChange = useCallback((token: Token) => {
-        console.log(token);
+    const changeGame = useCallback((setter: (oldState: GameState) => GameState) => {
+        setGame(oldState => {
+            const newState = setter(oldState)
+            return newState
+        })
+    }, [setGame])
 
-        setGame(g => ({
+    const tokenChange = useCallback((token: Token) => {
+        changeGame(g => ({
             ...g,
             tokens: g.tokens.map(t => {
                 if (t.id === token.id) {
                     return token
                 }
                 return t
-            })
+            }),
         }))
-    }, [setGame])
+    }, [changeGame])
 
     return <div
         class={styles.game}
