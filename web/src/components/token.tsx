@@ -13,10 +13,22 @@ root.addEventListener("mousemove", e => {
 
 export interface Token {
     id: string;
+    updatedAt: number
     position: Point;
     image: string;
     size: number;
     user: string;
+    deleted: boolean
+}
+
+export function mergeTokens(first: Token, ...tokens: Token[]): Token {
+    let newest = first
+    for (const token of tokens) {
+        if (token.updatedAt > newest.updatedAt) {
+            newest = token
+        }
+    }
+    return newest
 }
 
 interface TokenCProps {
@@ -74,6 +86,14 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
         })
     }, [setMoving])
 
+    const remove = useCallback((e: MouseEvent) => {
+        e.stopPropagation()
+
+        props.onChange({
+            ...props.token,
+            deleted: true,
+        })
+    }, [setMoving])
     return <div
         class={classNames(styles.token, {
             [styles.open]: selected,
@@ -89,7 +109,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
         <div class={styles.menu}>
             <button class={styles.close} onClick={closeMenu}>×</button>
             <button class={styles.move} onClick={startMove}>M</button>
-            <button>T</button>
+            <button class={styles.remove} onClick={remove}>D</button>
         </div>
         <img class={styles.image} src={props.token.image} />
 

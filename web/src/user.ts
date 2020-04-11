@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 
-let cachedUser: string | null
+let cachedUser: string | null = null
 
 export function getUser(): string {
     if (cachedUser === null) {

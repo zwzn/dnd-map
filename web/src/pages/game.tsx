@@ -1,14 +1,16 @@
 import { FunctionalComponent, h } from 'preact'
-import { useState, useCallback, useReducer, useEffect } from 'preact/hooks'
+import { useState, useCallback, useReducer, useEffect, useRef } from 'preact/hooks'
 import { PinchZoom } from '../components/pinch-zoom'
 import styles from './game.module.scss'
 import classNames from 'classnames'
-import { Token, TokenC } from '../components/token'
+import { Token, TokenC, mergeTokens } from '../components/token'
 import { getUser } from '../user'
 import { connect, Connection } from '../room'
+import { v4 as uuidv4 } from 'uuid'
 
 interface GameState {
     background: string;
+    updatedAt: number
     dm: string
     grid: {
         size: number;
@@ -18,17 +20,48 @@ interface GameState {
     tokens: Token[];
 }
 
+function mergeGameState(a: GameState, b: GameState): GameState {
+    let newState: GameState
+
+    if (a.updatedAt > b.updatedAt) {
+        newState = { ...a }
+    } else {
+        newState = { ...b }
+    }
+
+    const tokenIDs = Array.from(new Set(a.tokens.map(t => t.id).concat(b.tokens.map(t => t.id))))
+
+    return {
+        ...newState,
+        tokens: tokenIDs.map(id => {
+            const ta = a.tokens.find(t => t.id === id)
+            const tb = b.tokens.find(t => t.id === id)
+
+            if (ta === undefined) {
+                return tb
+            }
+            if (tb === undefined) {
+                return ta
+            }
+            return mergeTokens(ta, tb)
+        }).filter((t): t is Token => t !== undefined)
+    }
+}
+
+type Message =
+    | { type: "update", game: GameState }
+    | { type: "enter" }
+
 interface Props {
     matches: {
         id: string
     }
 }
 
-let conn: Connection<GameState> | undefined
-
 export const Game: FunctionalComponent<Props> = props => {
     const [game, setGame] = useState<GameState>({
         background: 'https://i.redd.it/7igkmw001p121.jpg',
+        updatedAt: Date.now(),
         dm: getUser(),
         grid: {
             size: 50,
@@ -36,44 +69,29 @@ export const Game: FunctionalComponent<Props> = props => {
             visible: true,
         },
         tokens: [
-            {
-                id: "1",
-                position: { x: 7, y: 1 },
-                image: "https://5e.tools/img/MM/Young%20Black%20Dragon.png?v=1.102.7",
-                size: 4,
-                user: getUser(),
-            },
-            {
-                id: "2",
-                position: { x: 1, y: 1 },
-                image: "https://5e.tools/img/MM/Young%20Black%20Dragon.png?v=1.102.7",
-                size: 3,
-                user: '',
-            },
-            {
-                id: "3",
-                position: { x: 10, y: 6 },
-                image: "https://5e.tools/img/MM/Young%20Black%20Dragon.png?v=1.102.7",
-                size: 2,
-                user: '',
-            },
-            {
-                id: "4",
-                position: { x: 13, y: 6 },
-                image: "https://5e.tools/img/MM/Young%20Black%20Dragon.png?v=1.102.7",
-                size: 1,
-                user: '',
-            },
         ],
     })
 
+    const conn = useRef<Connection<Message>>()
+    const gameRef = useRef<GameState>(game)
+
     useEffect(() => {
-        connect<GameState>(props.matches.id).then(c => {
-            c.onMessage(gs => setGame(gs))
-            conn = c
+        connect<Message>(props.matches.id).then(c => {
+            c.onMessage(msg => {
+                console.log('message', msg.type);
+
+                if (msg.type === 'update') {
+                    gameRef.current = msg.game
+                    setGame(msg.game)
+                } else if (msg.type === 'enter') {
+                    c.send({ type: 'update', game: gameRef.current })
+                }
+            })
+            c.send({ type: 'enter' })
+            conn.current = c
         })
 
-        return () => conn?.close()
+        return () => conn.current?.close()
     }, [props.matches.id])
 
     const changeGame = useCallback((setter: (oldState: GameState) => GameState) => {
@@ -81,7 +99,9 @@ export const Game: FunctionalComponent<Props> = props => {
 
         setGame(oldState => {
             const newState = setter(oldState)
-            conn?.send(newState)
+            newState.updatedAt = Date.now()
+            gameRef.current = newState
+            conn.current?.send({ type: 'update', game: newState })
             return newState
         })
     }, [setGame, conn])
@@ -93,7 +113,10 @@ export const Game: FunctionalComponent<Props> = props => {
                 if (t.id === token.id) {
                     return token
                 }
-                return t
+                return {
+                    ...t,
+                    updatedAt: Date.now(),
+                }
             }),
         }))
     }, [changeGame])
@@ -103,6 +126,21 @@ export const Game: FunctionalComponent<Props> = props => {
         const img = e.target as HTMLImageElement
         setSize({ x: img.width, y: img.height })
     }, [setSize])
+
+    const addToken = useCallback(() => {
+        changeGame(g => ({
+            ...g,
+            tokens: g.tokens.concat([{
+                id: uuidv4(),
+                updatedAt: Date.now(),
+                position: { x: 1, y: 1 },
+                image: prompt('enter the url') ?? 'https://en.wiktionary.org/wiki/question_mark#/media/File:Question_mark_(black).svg',
+                size: Number(prompt('enter size')) || 1,
+                user: getUser(),
+                deleted: false,
+            }])
+        }))
+    }, [changeGame])
 
     return <div
         class={styles.game}
@@ -126,12 +164,14 @@ export const Game: FunctionalComponent<Props> = props => {
                         }}
                     />}
                 <div class={styles.tokens}>
-                    {game.tokens.map(t => <TokenC key={t.id} token={t} onChange={tokenChange} />)}
+                    {game.tokens
+                        .filter(t => !t.deleted)
+                        .map(t => <TokenC key={t.id} token={t} onChange={tokenChange} />)}
                 </div>
             </div>
         </PinchZoom>
-        {/* <div class={styles.hud}>
-            test
-        </div> */}
+        <div class={styles.hud}>
+            <div class={styles.add} onClick={addToken}>+</div>
+        </div>
     </div>
 }
