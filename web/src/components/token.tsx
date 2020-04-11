@@ -1,8 +1,9 @@
 import { FunctionComponent, h } from "preact"
-import { useCallback, useState } from "preact/hooks"
+import { useCallback, useState, useReducer } from "preact/hooks"
 import classNames from "classnames"
 import styles from "./token.module.scss"
 import { nextEvent } from "../next-event"
+import { getUser } from "../user"
 
 const root = document.documentElement
 root.addEventListener("mousemove", e => {
@@ -15,6 +16,7 @@ export interface Token {
     position: Point;
     image: string;
     size: number;
+    user: string;
 }
 
 interface TokenCProps {
@@ -28,15 +30,30 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
 
     const openMenu = useCallback((e: MouseEvent) => {
         e.stopPropagation()
+
+        if (props.token.user !== getUser()) {
+            return
+        }
+
         setSelected(true)
     }, [setSelected])
     const closeMenu = useCallback((e: MouseEvent) => {
         e.stopPropagation()
+
+        if (props.token.user !== getUser()) {
+            return
+        }
+
         setSelected(false)
     }, [setSelected])
 
     const startMove = useCallback(async (e: MouseEvent) => {
         e.stopPropagation()
+
+        if (props.token.user !== getUser()) {
+            return
+        }
+
         setMoving(true)
 
         const nextE = await nextEvent(document.body, 'click') as MouseEvent
@@ -56,27 +73,6 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
             },
         })
     }, [setMoving])
-
-    // const endMove = useCallback((e: MouseEvent) => {
-    //     e.stopPropagation()
-    //     setMoving(false)
-    //     // setSelected(false)
-
-    //     const element = e.target as HTMLElement
-    //     const s = getComputedStyle(element)
-    //     const x = Number(s.getPropertyValue('--x').slice(0, -2))
-    //     const y = Number(s.getPropertyValue('--y').slice(0, -2))
-    //     const gridSize = Number(s.getPropertyValue('--grid-size').slice(0, -2))
-    //     const scale = Number(s.getPropertyValue('--scale'))
-
-    //     props.onChange({
-    //         ...props.token,
-    //         position: {
-    //             x: Math.round((((e.x - x) / scale) / gridSize - props.token.size / 2)),
-    //             y: Math.round((((e.y - y) / scale) / gridSize - props.token.size / 2)),
-    //         },
-    //     })
-    // }, [props, setSelected, setMoving])
 
     return <div
         class={classNames(styles.token, {
