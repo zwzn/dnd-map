@@ -67,5 +67,5 @@ func main() {
 	r.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("/home/adam/Documents/code/dnd-map/images"))))
 	r.PathPrefix("/").Handler(FileServer404(box, "index.html"))
 
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":8753", r)
 }

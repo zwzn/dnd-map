@@ -1,5 +1,5 @@
 import { FunctionComponent, h } from "preact"
-import { useCallback, useState, useReducer } from "preact/hooks"
+import { useCallback, useState } from "preact/hooks"
 import classNames from "classnames"
 import styles from "./token.module.scss"
 import { nextEvent } from "../next-event"
@@ -13,12 +13,12 @@ root.addEventListener("mousemove", e => {
 
 export interface Token {
     id: string;
-    updatedAt: number
+    updatedAt: number;
     position: Point;
     image: string;
     size: number;
     user: string;
-    deleted: boolean
+    deleted: boolean;
 }
 
 export function mergeTokens(first: Token, ...tokens: Token[]): Token {
@@ -48,7 +48,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
         }
 
         setSelected(true)
-    }, [setSelected])
+    }, [setSelected, props.token.user])
     const closeMenu = useCallback((e: MouseEvent) => {
         e.stopPropagation()
 
@@ -57,7 +57,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
         }
 
         setSelected(false)
-    }, [setSelected])
+    }, [setSelected, props.token.user])
 
     const startMove = useCallback(async (e: MouseEvent) => {
         e.stopPropagation()
@@ -84,7 +84,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
                 y: Math.round((((nextE.y - y) / scale) / gridSize - props.token.size / 2)),
             },
         })
-    }, [setMoving])
+    }, [setMoving, props])
 
     const remove = useCallback((e: MouseEvent) => {
         e.stopPropagation()
@@ -93,7 +93,7 @@ export const TokenC: FunctionComponent<TokenCProps> = props => {
             ...props.token,
             deleted: true,
         })
-    }, [setMoving])
+    }, [props])
     return <div
         class={classNames(styles.token, {
             [styles.open]: selected,

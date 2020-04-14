@@ -1,5 +1,5 @@
 import { FunctionalComponent, h } from 'preact'
-import { useState, useCallback, useReducer, useEffect, useRef } from 'preact/hooks'
+import { useState, useCallback, useEffect, useRef } from 'preact/hooks'
 import { PinchZoom } from '../components/pinch-zoom'
 import styles from './game.module.scss'
 import classNames from 'classnames'
@@ -12,7 +12,7 @@ import { bindValue, bind } from '@zwzn/spicy'
 
 interface GameState {
     background: string;
-    updatedAt: number
+    updatedAt: number;
     grid: {
         size: number;
         offset: Point;
@@ -21,7 +21,7 @@ interface GameState {
     tokens: Token[];
 }
 
-function mergeGameState(a: GameState, b: GameState): GameState {
+export function mergeGameState(a: GameState, b: GameState): GameState {
     let newState: GameState
 
     if (a.updatedAt > b.updatedAt) {
@@ -45,7 +45,7 @@ function mergeGameState(a: GameState, b: GameState): GameState {
                 return ta
             }
             return mergeTokens(ta, tb)
-        }).filter((t): t is Token => t !== undefined)
+        }).filter((t): t is Token => t !== undefined),
     }
 }
 
@@ -57,15 +57,62 @@ function updateGameState(game: GameState, changes: Partial<GameState>): GameStat
     }
 }
 
+let tokenImages: string[] | undefined
+fetch('/img/index.json').then(r => r.json()).then(paths => {
+    tokenImages = paths
+})
+
+const AddToken: FunctionalComponent<ModalControl<Pick<Token, 'image' | 'size'> | undefined>> = ctx => {
+    const [image, setImage] = useState('')
+    const [imageSearch, setImageSearch] = useState('')
+    const [size, setSize] = useState('1')
+    const add = useCallback(() => {
+        ctx.resolve({
+            image: image,
+            size: Number(size),
+        })
+    }, [size, image, ctx])
+    const clickImage = useCallback((img: string) => {
+        setImage(img)
+    }, [setImage])
+    return <Modal onCloseClick={ctx.close}>
+        <ModalHeader>Add Token</ModalHeader>
+        <ModalBody>
+            <label>
+                Image:
+                <input value={imageSearch} onInput={bindValue(setImageSearch)} />
+            </label>
+            <ul>
+                {tokenImages
+                    ?.filter(img => img.toLowerCase().includes(imageSearch.toLowerCase()))
+                    .slice(0, 10)
+                    .map(img => (
+                        <li onClick={bind(img, clickImage)}>
+                            <img src={img} style='width: 30px;' />
+                            {img}
+                        </li>
+                    ))}
+            </ul>
+
+            <img src={image} style='width: 30px;' />
+            <label>
+                Size:
+                <input type='number' value={size} onInput={bindValue(setSize)} min='1' max='10' />
+            </label>
+            <button onClick={add}>Add</button>
+        </ModalBody>
+    </Modal>
+}
+
 type Message =
-    | { type: "update", game: GameState }
-    | { type: "enter" }
+    | { type: 'update'; game: GameState }
+    | { type: 'enter' }
 
 interface Props {
     matches: {
-        dm: string
-        id: string
-    }
+        dm: string;
+        id: string;
+    };
 }
 
 export const Game: FunctionalComponent<Props> = props => {
@@ -87,7 +134,7 @@ export const Game: FunctionalComponent<Props> = props => {
     useEffect(() => {
         connect<Message>(props.matches.dm, props.matches.id).then(c => {
             c.onMessage(msg => {
-                console.log('message', msg.type);
+                console.log('message', msg.type)
 
                 if (msg.type === 'update') {
                     gameRef.current = msg.game
@@ -101,11 +148,9 @@ export const Game: FunctionalComponent<Props> = props => {
         })
 
         return () => conn.current?.close()
-    }, [props.matches.id])
+    }, [props.matches.id, props.matches.dm])
 
     const changeGame = useCallback((setter: (oldState: GameState) => GameState) => {
-        console.log('change', conn);
-
         setGame(oldState => {
             const newState = updateGameState(setter(oldState), {})
             gameRef.current = newState
@@ -140,7 +185,6 @@ export const Game: FunctionalComponent<Props> = props => {
         if (token === undefined) {
             return
         }
-        console.log(token);
 
         changeGame(g => ({
             ...g,
@@ -151,12 +195,12 @@ export const Game: FunctionalComponent<Props> = props => {
                 position: { x: 1, y: 1 },
                 user: getUser(),
                 deleted: false,
-            }])
+            }]),
         }))
     }, [changeGame])
 
     const changeBackground = useCallback(() => {
-        openModal(ctx => {
+        const ChangeBackground: FunctionalComponent<ModalControl<never>> = ctx => {
             const [back, setBack] = useState(gameRef.current.background)
             const [size, setSize] = useState(String(gameRef.current.grid.size))
             useEffect(() => {
@@ -166,7 +210,7 @@ export const Game: FunctionalComponent<Props> = props => {
                     grid: {
                         ...g.grid,
                         size: Number(size),
-                    }
+                    },
                 }))
             }, [back, size])
             return <Modal onCloseClick={ctx.close}>
@@ -182,7 +226,8 @@ export const Game: FunctionalComponent<Props> = props => {
                     </div>
                 </ModalBody>
             </Modal>
-        })
+        }
+        openModal(ChangeBackground)
     }, [changeGame])
 
     const isDM = useCallback(() => props.matches.dm === getUser(), [props.matches.dm])
@@ -220,55 +265,4 @@ export const Game: FunctionalComponent<Props> = props => {
                 <div class={classNames(styles.fab, styles.changeBackground)} onClick={changeBackground}>B</div>}
         </div>
     </div>
-}
-
-let tokenImages: string[] | undefined
-fetch('/img/index.json').then(r => r.json()).then(paths => {
-    tokenImages = paths
-})
-function useTokenImages(): string[] {
-
-    return []
-}
-
-const AddToken: FunctionalComponent<ModalControl<Pick<Token, 'image' | 'size'> | undefined>> = ctx => {
-    const [image, setImage] = useState('')
-    const [imageSearch, setImageSearch] = useState('')
-    const [size, setSize] = useState('1')
-    const add = useCallback(() => {
-        ctx.resolve({
-            image: image,
-            size: Number(size),
-        })
-    }, [size, image])
-    const clickImage = useCallback((img: string) => {
-        setImage(img)
-    }, [setImage])
-    return <Modal onCloseClick={ctx.close}>
-        <ModalHeader>Add Token</ModalHeader>
-        <ModalBody>
-            <label>
-                Image:
-                <input value={imageSearch} onInput={bindValue(setImageSearch)} />
-            </label>
-            <ul>
-                {tokenImages
-                    ?.filter(img => img.toLowerCase().includes(imageSearch.toLowerCase()))
-                    .slice(0, 10)
-                    .map(img => (
-                        <li onClick={bind(img, clickImage)}>
-                            <img src={img} style='width: 30px;' />
-                            {img}
-                        </li>
-                    ))}
-            </ul>
-
-            <img src={image} style='width: 30px;' />
-            <label>
-                Size:
-                <input type="number" value={size} onInput={bindValue(setSize)} min='1' max='10' />
-            </label>
-            <button onClick={add}>Add</button>
-        </ModalBody>
-    </Modal>
 }

@@ -1,10 +1,10 @@
-import { Component, h, Fragment, FunctionalComponent, ComponentChild } from 'preact'
+import { h, FunctionalComponent, ComponentChild } from 'preact'
 import { useEffect, useState } from 'preact/hooks'
 import classNames from 'classnames'
 import styles from './modal.module.scss'
 import EventEmitter from 'events'
 
-export const Modal: FunctionalComponent<{ onCloseClick: () => void, className?: string }> =
+export const Modal: FunctionalComponent<{ onCloseClick: () => void; className?: string }> =
     ({ children, onCloseClick, className }) => (
         <div className={classNames(styles.modal, className)}>
             {children}
@@ -19,8 +19,8 @@ export const ModalBody: FunctionalComponent = ({ children }) => <div className={
 const emitter = new EventEmitter()
 
 export interface ModalControl<T> {
-    resolve: (value: T | PromiseLike<T>) => void
-    close: () => void
+    resolve: (value: T | PromiseLike<T>) => void;
+    close: () => void;
 }
 
 /**
@@ -34,6 +34,7 @@ export function openModal<T>(Content: FunctionalComponent<ModalControl<T>>, defa
 export function openModal<T = void>(Content: FunctionalComponent<ModalControl<T>>, defaultValue?: T): Promise<T> {
     return new Promise<T>(resolve => {
         let wrapper: HTMLDivElement | null = null
+        /* eslint-disable-next-line */
         let modal: ComponentChild
         let unlisten: (() => void) | undefined
 
@@ -42,7 +43,7 @@ export function openModal<T = void>(Content: FunctionalComponent<ModalControl<T>
          *
          * @param value the value `openModal` will return
          */
-        const close = (value: T | PromiseLike<T> | undefined) => {
+        const close = (value: T | PromiseLike<T> | undefined): void => {
             emitter.emit('close', modal)
             resolve(value)
             unlisten?.()
@@ -56,7 +57,7 @@ export function openModal<T = void>(Content: FunctionalComponent<ModalControl<T>
 
         // if the user clicks the x in the modal it will close and return the
         // default value
-        const modalClose = (e: MouseEvent) => {
+        const modalClose = (e: MouseEvent): void => {
             if (e.target === wrapper) {
                 close(defaultValue)
             }
@@ -65,7 +66,6 @@ export function openModal<T = void>(Content: FunctionalComponent<ModalControl<T>
         modal = <div ref={e => wrapper = e} className={styles.modalWrapper} onClick={modalClose}>
             <Content resolve={close} close={() => close(defaultValue)} />
         </div>
-
 
         emitter.emit('open', modal)
     })
@@ -89,19 +89,18 @@ export async function openInfoModal(title: ComponentChild, body: ComponentChild)
     </Modal>)
 }
 
-
 export const ModalController: FunctionalComponent = () => {
     const [openModals, setOpenModals] = useState<ComponentChild[]>([])
 
     useEffect(() => {
-        const open = (modal: ComponentChild) => setOpenModals(m => m.concat([modal]))
+        const open = (modal: ComponentChild): void => setOpenModals(m => m.concat([modal]))
 
         emitter.on('open', open)
         return () => emitter.off('open', open)
     }, [setOpenModals])
 
     useEffect(() => {
-        const close = (modal: ComponentChild) => setOpenModals(ms => ms.filter(m => m !== modal))
+        const close = (modal: ComponentChild): void => setOpenModals(ms => ms.filter(m => m !== modal))
 
         emitter.on('close', close)
         return () => emitter.off('close', close)
