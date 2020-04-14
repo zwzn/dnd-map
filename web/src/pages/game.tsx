@@ -13,7 +13,6 @@ import { bindValue, bind } from '@zwzn/spicy'
 interface GameState {
     background: string;
     updatedAt: number
-    dm: string
     grid: {
         size: number;
         offset: Point;
@@ -50,12 +49,21 @@ function mergeGameState(a: GameState, b: GameState): GameState {
     }
 }
 
+function updateGameState(game: GameState, changes: Partial<GameState>): GameState {
+    return {
+        ...game,
+        ...changes,
+        updatedAt: Date.now(),
+    }
+}
+
 type Message =
     | { type: "update", game: GameState }
     | { type: "enter" }
 
 interface Props {
     matches: {
+        dm: string
         id: string
     }
 }
@@ -64,7 +72,6 @@ export const Game: FunctionalComponent<Props> = props => {
     const [game, setGame] = useState<GameState>({
         background: 'https://i.redd.it/7igkmw001p121.jpg',
         updatedAt: Date.now(),
-        dm: getUser(),
         grid: {
             size: 50,
             offset: { x: 0, y: 0 },
@@ -78,7 +85,7 @@ export const Game: FunctionalComponent<Props> = props => {
     const gameRef = useRef<GameState>(game)
 
     useEffect(() => {
-        connect<Message>(props.matches.id).then(c => {
+        connect<Message>(props.matches.dm, props.matches.id).then(c => {
             c.onMessage(msg => {
                 console.log('message', msg.type);
 
@@ -100,8 +107,7 @@ export const Game: FunctionalComponent<Props> = props => {
         console.log('change', conn);
 
         setGame(oldState => {
-            const newState = setter(oldState)
-            newState.updatedAt = Date.now()
+            const newState = updateGameState(setter(oldState), {})
             gameRef.current = newState
             conn.current?.send({ type: 'update', game: newState })
             return newState
@@ -149,6 +155,37 @@ export const Game: FunctionalComponent<Props> = props => {
         }))
     }, [changeGame])
 
+    const changeBackground = useCallback(() => {
+        openModal(ctx => {
+            const [back, setBack] = useState(gameRef.current.background)
+            const [size, setSize] = useState(String(gameRef.current.grid.size))
+            useEffect(() => {
+                changeGame(g => ({
+                    ...g,
+                    background: back,
+                    grid: {
+                        ...g.grid,
+                        size: Number(size),
+                    }
+                }))
+            }, [back, size])
+            return <Modal onCloseClick={ctx.close}>
+                <ModalHeader>Change Background</ModalHeader>
+                <ModalBody>
+                    <div>
+                        Background:
+                        <input value={back} onInput={bindValue(setBack)} />
+                    </div>
+                    <div>
+                        Size:
+                        <input type='number' value={size} onInput={bindValue(setSize)} />
+                    </div>
+                </ModalBody>
+            </Modal>
+        })
+    }, [changeGame])
+
+    const isDM = useCallback(() => props.matches.dm === getUser(), [props.matches.dm])
     return <div
         class={styles.game}
         style={{
@@ -178,7 +215,9 @@ export const Game: FunctionalComponent<Props> = props => {
             </div>
         </PinchZoom>
         <div class={styles.hud}>
-            <div class={styles.add} onClick={addToken}>+</div>
+            <div class={classNames(styles.fab, styles.add)} onClick={addToken}>+</div>
+            {isDM() &&
+                <div class={classNames(styles.fab, styles.changeBackground)} onClick={changeBackground}>B</div>}
         </div>
     </div>
 }

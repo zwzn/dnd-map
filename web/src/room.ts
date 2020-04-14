@@ -23,9 +23,9 @@ export class Connection<T> {
     }
 }
 
-export function connect<T>(id: string): Promise<Connection<T>> {
+export function connect<T>(dm: string, id: string): Promise<Connection<T>> {
     return new Promise((resolve, reject) => {
-        const ws = new WebSocket(location.origin.replace('http', 'ws') + '/room/' + id)
+        const ws = new WebSocket(location.origin.replace('http', 'ws') + `/room/${dm}/${id}`)
         const open = () => {
             ws.removeEventListener('open', open)
             resolve(new Connection(ws))

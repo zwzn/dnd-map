@@ -30,17 +30,18 @@ func room(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vars := mux.Vars(r)
+	dm := vars["dm"]
 	id := vars["id"]
 
 	roomsMtx.Lock()
-	room, ok := rooms[id]
+	room, ok := rooms[dm+"/"+id]
 	if !ok {
 		room = &Room{
 			ID:    id,
 			Conns: []*websocket.Conn{},
 			mtx:   &sync.RWMutex{},
 		}
-		rooms[id] = room
+		rooms[dm+"/"+id] = room
 	}
 	roomsMtx.Unlock()
 

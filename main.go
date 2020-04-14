@@ -62,7 +62,7 @@ func main() {
 	box := packr.NewBox("./web/dist")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/room/{id}", room)
+	r.HandleFunc("/room/{dm}/{id}", room)
 	r.Handle("/img/index.json", FileServerIndex("/home/adam/Documents/code/dnd-map/images", "/img/"))
 	r.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("/home/adam/Documents/code/dnd-map/images"))))
 	r.PathPrefix("/").Handler(FileServer404(box, "index.html"))

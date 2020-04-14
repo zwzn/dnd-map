@@ -8,7 +8,7 @@ import './app.scss'
 render(<div>
     <Router>
         <Route path='/' component={Home} />
-        <Route path='/game/:id' component={Game} />
+        <Route path='/game/:dm/:id' component={Game} />
     </Router>
     <ModalController />
 </div>, document.getElementById('app')!)
