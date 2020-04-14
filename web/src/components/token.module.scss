@@ -16,6 +16,7 @@
     $x: "var(--grid-size) * var(--token-x)";
     $y: "var(--grid-size) * var(--token-y)";
     transform: translate(calc(#{$x}), calc(#{$y}));
+    transition: transform 0.2s;
 
     .image {
         position: absolute;

@@ -7,6 +7,8 @@ import { Token, TokenC, mergeTokens } from '../components/token'
 import { getUser } from '../user'
 import { connect, Connection } from '../room'
 import { v4 as uuidv4 } from 'uuid'
+import { openModal, Modal, ModalHeader, ModalBody, ModalControl } from '../components/modal'
+import { bindValue, bind } from '@zwzn/spicy'
 
 interface GameState {
     background: string;
@@ -127,15 +129,20 @@ export const Game: FunctionalComponent<Props> = props => {
         setSize({ x: img.width, y: img.height })
     }, [setSize])
 
-    const addToken = useCallback(() => {
+    const addToken = useCallback(async () => {
+        const token = await openModal<Pick<Token, 'image' | 'size'> | undefined>(AddToken, undefined)
+        if (token === undefined) {
+            return
+        }
+        console.log(token);
+
         changeGame(g => ({
             ...g,
             tokens: g.tokens.concat([{
+                ...token,
                 id: uuidv4(),
                 updatedAt: Date.now(),
                 position: { x: 1, y: 1 },
-                image: prompt('enter the url') ?? 'https://en.wiktionary.org/wiki/question_mark#/media/File:Question_mark_(black).svg',
-                size: Number(prompt('enter size')) || 1,
                 user: getUser(),
                 deleted: false,
             }])
@@ -174,4 +181,55 @@ export const Game: FunctionalComponent<Props> = props => {
             <div class={styles.add} onClick={addToken}>+</div>
         </div>
     </div>
+}
+
+let tokenImages: string[] | undefined
+fetch('/img/index.json').then(r => r.json()).then(paths => {
+    tokenImages = paths
+})
+function useTokenImages(): string[] {
+
+    return []
+}
+
+const AddToken: FunctionalComponent<ModalControl<Pick<Token, 'image' | 'size'> | undefined>> = ctx => {
+    const [image, setImage] = useState('')
+    const [imageSearch, setImageSearch] = useState('')
+    const [size, setSize] = useState('1')
+    const add = useCallback(() => {
+        ctx.resolve({
+            image: image,
+            size: Number(size),
+        })
+    }, [size, image])
+    const clickImage = useCallback((img: string) => {
+        setImage(img)
+    }, [setImage])
+    return <Modal onCloseClick={ctx.close}>
+        <ModalHeader>Add Token</ModalHeader>
+        <ModalBody>
+            <label>
+                Image:
+                <input value={imageSearch} onInput={bindValue(setImageSearch)} />
+            </label>
+            <ul>
+                {tokenImages
+                    ?.filter(img => img.toLowerCase().includes(imageSearch.toLowerCase()))
+                    .slice(0, 10)
+                    .map(img => (
+                        <li onClick={bind(img, clickImage)}>
+                            <img src={img} style='width: 30px;' />
+                            {img}
+                        </li>
+                    ))}
+            </ul>
+
+            <img src={image} style='width: 30px;' />
+            <label>
+                Size:
+                <input type="number" value={size} onInput={bindValue(setSize)} min='1' max='10' />
+            </label>
+            <button onClick={add}>Add</button>
+        </ModalBody>
+    </Modal>
 }
