@@ -1,4 +1,4 @@
-module github.com/zwzn/dnd-map
+module github.com/abibby/dnd-map
 
 go 1.14
 
