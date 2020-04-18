@@ -9,6 +9,7 @@ import { connect, Connection } from '../room'
 import { v4 as uuidv4 } from 'uuid'
 import { openModal, Modal, ModalHeader, ModalBody, ModalControl } from '../components/modal'
 import { bindValue, bind } from '@zwzn/spicy'
+import { start } from '../engine'
 
 interface GameState {
     background: string;
@@ -159,27 +160,6 @@ export const Game: FunctionalComponent<Props> = props => {
         })
     }, [setGame, conn])
 
-    const tokenChange = useCallback((token: Token) => {
-        changeGame(g => ({
-            ...g,
-            tokens: g.tokens.map(t => {
-                if (t.id === token.id) {
-                    return token
-                }
-                return {
-                    ...t,
-                    updatedAt: Date.now(),
-                }
-            }),
-        }))
-    }, [changeGame])
-
-    const [size, setSize] = useState({ x: 0, y: 0 })
-    const backgroundLoad = useCallback((e: Event) => {
-        const img = e.target as HTMLImageElement
-        setSize({ x: img.width, y: img.height })
-    }, [setSize])
-
     const addToken = useCallback(async () => {
         const token = await openModal<Pick<Token, 'image' | 'size'> | undefined>(AddToken, undefined)
         if (token === undefined) {
@@ -230,35 +210,17 @@ export const Game: FunctionalComponent<Props> = props => {
         openModal(ChangeBackground)
     }, [changeGame])
 
+    const canvasRef = useRef<HTMLCanvasElement | undefined>()
+
+    useEffect(() => {
+        if (canvasRef.current) {
+            return start(canvasRef.current)
+        }
+    }, [])
+
     const isDM = useCallback(() => props.matches.dm === getUser(), [props.matches.dm])
-    return <div
-        class={styles.game}
-        style={{
-            '--grid-size': game.grid.size + 'px',
-            '--grid-offset-x': game.grid.offset.x + 'px',
-            '--grid-offset-y': game.grid.offset.y + 'px',
-        }}
-    >
-        <PinchZoom class={styles.map}>
-            <div>
-                <img src={game.background} onLoad={backgroundLoad} />
-                {game.grid.visible &&
-                    <div
-                        class={classNames({
-                            [styles.grid]: true,
-                        })}
-                        style={{
-                            width: size.x + 'px',
-                            height: size.y + 'px',
-                        }}
-                    />}
-                <div class={styles.tokens}>
-                    {game.tokens
-                        .filter(t => !t.deleted)
-                        .map(t => <TokenC key={t.id} token={t} onChange={tokenChange} />)}
-                </div>
-            </div>
-        </PinchZoom>
+    return <div class={styles.game} >
+        <canvas ref={canvasRef} class={styles.map} />
         <div class={styles.hud}>
             <div class={classNames(styles.fab, styles.add)} onClick={addToken}>+</div>
             {isDM() &&
